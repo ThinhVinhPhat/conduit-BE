@@ -113,6 +113,22 @@ export class ArticleController {
   }
 
   @ApiOperationDecorator({
+    description: 'Update article likes',
+    summary: 'Update article likes',
+    type: UpdateArticleDto,
+  })
+  @ApiBearerAuth()
+  @Patch(':id/update-like')
+  updateLikes(@UserReq() currentUser: User, @Param('id') id: string) {
+    try {
+      const userId = currentUser.id;
+      return this.articleService.updateLike(userId, id);
+    } catch (error) {
+      this.logger.error('Failed to create article', error);
+    }
+  }
+
+  @ApiOperationDecorator({
     description: 'Delete one article',
     summary: 'Delete one article',
   })

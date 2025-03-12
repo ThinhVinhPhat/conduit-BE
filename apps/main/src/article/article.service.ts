@@ -228,6 +228,54 @@ export class ArticleService {
     };
   }
 
+  async updateLike(userId: string, id: string) {
+    const article = await this.prisma.article.findFirst({
+      where: { id },
+      include: {
+        user: true,
+        articleTag: true,
+      },
+    });
+    if (!article) {
+      throw new HttpException(articleRespond.get.error, HttpStatus.NOT_FOUND);
+    }
+    const user = await this.prisma.user.findFirst({
+      where: { id: userId },
+    });
+    if (!user) {
+      throw new HttpException(userRespond.get.error, HttpStatus.NOT_FOUND);
+    }
+    const articleFavorite = await this.prisma.favorite.findFirst({
+      where: { userId: user.id, articleId: article.id },
+    });
+    if (articleFavorite) {
+      await this.prisma.favorite.delete({ where: { id: articleFavorite.id } });
+      await this.prisma.article.update({
+        where: { id: article.id },
+        data: {
+          totalLike: article.totalLike - 1,
+        },
+      });
+    }
+    await this.prisma.favorite.create({
+      data: {
+        userId: user.id,
+        articleId: article.id,
+      },
+    });
+    await this.prisma.article.update({
+      where: { id: article.id },
+      data: {
+        totalLike: article.totalLike + 1,
+      },
+    });
+    return {
+      status: HttpStatus.OK,
+      data: new ArticleResponseWrapperDto(article),
+      message: articleRespond.get.success,
+    };
+  }
+
   async update(userId: string, id: string, updateArticleDto: UpdateArticleDto) {
     const user = await this.prisma.user.findFirst({
       where: {

@@ -33,7 +33,6 @@ model User {
   comments    Comment[]
   favorites   Favorite[]
   following   Following[]
-
   @@map("user")
 }
 
@@ -49,6 +48,7 @@ model Article {
   createdAt        DateTime     @default(now()) @map("created_at")
   updatedAt        DateTime     @default(now()) @updatedAt @map("updated_at")
   user             User         @relation(fields: [userId], references: [id])
+  favorited        Boolean      @default(false)
   comments         Comment[]
   articleTag       ArticleTag[]
   favorites        Favorite[]
