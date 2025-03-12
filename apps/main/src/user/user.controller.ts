@@ -13,7 +13,7 @@ import {
 } from '@nestjs/common';
 import { UserService } from './user.service';
 import { RequestCreateUserDto } from './dto/create-user.dto';
-import { RequestUpdateUserDto, UpdateUserDto } from './dto/update-user.dto';
+import { RequestUpdateUserDto } from './dto/update-user.dto';
 import { Public } from '@lib/decorators';
 import { ApiBearerAuth } from '@nestjs/swagger';
 import { UserReq, Roles, ApiOperationDecorator } from '@lib/decorators';
@@ -70,11 +70,8 @@ export class UserController {
     description: 'Get user',
   })
   @Get('/me')
-  async getMe(@UserReq() user: User): Promise<UserResponseWrapperDto> {
-    this.logger.log('Getting User.....');
-    const jwt = await this.authService.generateJwt(user);
-    this.logger.log('Done Getting User.....');
-    return new UserResponseWrapperDto(user, jwt);
+  async getMe(@UserReq() user: User): Promise<User> {
+    return user;
   }
 
   @Roles(Role.ADMIN)

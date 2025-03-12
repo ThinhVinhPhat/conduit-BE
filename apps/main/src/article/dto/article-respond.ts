@@ -1,5 +1,12 @@
 import { ApiProperty } from '@nestjs/swagger';
-import { Expose } from 'class-transformer';
+import { Expose, Type } from 'class-transformer';
+import {
+  IsArray,
+  IsDate,
+  IsNotEmpty,
+  IsOptional,
+  IsString,
+} from 'class-validator';
 
 export class AuthorDto {
   @ApiProperty({
@@ -31,6 +38,17 @@ export class ArticleDto {
     type: String,
     example: 'how-to-code-in-nestjs',
   })
+  @IsString()
+  @IsNotEmpty()
+  id: string;
+
+  @ApiProperty({
+    description: 'Slug of the article',
+    type: String,
+    example: 'how-to-code-in-nestjs',
+  })
+  @IsString()
+  @IsNotEmpty()
   slug: string;
 
   @ApiProperty({
@@ -38,6 +56,8 @@ export class ArticleDto {
     type: String,
     example: 'How to Code in NestJS',
   })
+  @IsString()
+  @IsNotEmpty()
   title: string;
 
   @ApiProperty({
@@ -45,6 +65,8 @@ export class ArticleDto {
     type: String,
     example: 'An introduction to NestJS with practical examples.',
   })
+  @IsString()
+  @IsNotEmpty()
   description: string;
 
   @ApiProperty({
@@ -53,6 +75,8 @@ export class ArticleDto {
     example:
       'In this article, we will explore how to build applications with NestJS...',
   })
+  @IsString()
+  @IsNotEmpty()
   body: string;
 
   @ApiProperty({
@@ -60,6 +84,8 @@ export class ArticleDto {
     type: [String],
     example: ['nestjs', 'backend', 'typescript'],
   })
+  @IsArray()
+  @IsNotEmpty()
   tagList: string[];
 
   @ApiProperty({
@@ -67,6 +93,8 @@ export class ArticleDto {
     type: Date,
     example: '2024-03-10T10:00:00Z',
   })
+  @IsDate()
+  @IsNotEmpty()
   createdAt: Date;
 
   @ApiProperty({
@@ -74,6 +102,9 @@ export class ArticleDto {
     type: Date,
     example: '2024-03-12T12:00:00Z',
   })
+  @IsDate()
+  @IsNotEmpty()
+  @IsOptional()
   updatedAt: Date;
 
   @ApiProperty({
@@ -99,6 +130,7 @@ export class ArticleResponseWrapperDto {
 
   constructor(props: any) {
     this.article = {
+      id: props.id,
       slug: props.slug,
       title: props.title,
       description: props.shortDescription,
@@ -108,22 +140,37 @@ export class ArticleResponseWrapperDto {
       updatedAt: props.updatedAt,
       favoritesCount: props.totalLike,
       author: {
-        username: props.user.username,
+        username: props.user.name,
         bio: props.user.description,
         image: props.user.avatar,
       },
     };
   }
 }
-
 export class ArticleResponsesWrapperDto {
   @ApiProperty({
     description: 'User response',
     type: ArticleDto,
   })
+  @Type(() => ArticleDto)
   articles: ArticleDto[];
 
-  constructor(props: any) {
-    this.articles = props;
+  constructor(props: any[]) {
+    this.articles = props.map((article) => ({
+      id: article.id,
+      slug: article.slug,
+      title: article.title,
+      description: article.shortDescription,
+      body: article.description,
+      tagList: article.tagList,
+      createdAt: article.createdAt,
+      updatedAt: article.updatedAt,
+      favoritesCount: article.totalLike,
+      author: {
+        username: article.user.name,
+        bio: article.user.description,
+        image: article.user.avatar,
+      },
+    }));
   }
 }

@@ -6,7 +6,7 @@ import { DatabaseService } from '@lib/database';
 import { IArticleResponse } from '@lib/types/index';
 import { TagService } from '../tag/tag.service';
 import slugify from 'slugify';
-import { Article } from '@prisma/client';
+import { Article, Tag } from '@prisma/client';
 import {
   ArticleResponsesWrapperDto,
   ArticleResponseWrapperDto,
@@ -21,20 +21,22 @@ export class ArticleService {
     this.Logger = new Logger(ArticleService.name);
   }
 
-  private getTag = async (articlesId: string[]) => {
+  private getTag = async (articlesId: string) => {
     const articleTags = await this.prisma.articleTag.findMany({
       where: {
-        articleId: {
-          in: articlesId,
-        },
+        articleId: articlesId,
       },
       include: {
         tag: true,
       },
     });
 
-    const tags = articleTags.map((tag) => tag.tag);
-    return tags;
+    const uniqueTags = Array.from(
+      new Map(
+        articleTags.map((item) => [item.tag.id, item.tag.title]),
+      ).values(),
+    );
+    return uniqueTags;
   };
 
   async create(userId: string, createArticleDto: CreateArticleDTO) {
@@ -100,8 +102,11 @@ export class ArticleService {
       });
       return {
         status: HttpStatus.OK,
-        data: new ArticleResponseWrapperDto(result),
-        message: articleRespond.get.success,
+        data: new ArticleResponseWrapperDto({
+          ...result,
+          tagList: await this.getTag(result.id),
+        }),
+        message: articleRespond.create.success,
       };
     } catch (error) {
       console.log(error);
@@ -120,12 +125,12 @@ export class ArticleService {
       },
     });
 
-    const articlesId = articles.map((article) => article.id);
-    const result = await this.getTag(articlesId);
-    const wrappedArticle = articles.map((article) => ({
-      ...article,
-      tagList: result,
-    }));
+    const wrappedArticle = await Promise.all(
+      articles.map(async (article) => ({
+        ...article,
+        tagList: await this.getTag(article.id),
+      })),
+    );
     return {
       status: HttpStatus.OK,
       data: new ArticleResponsesWrapperDto(wrappedArticle),
@@ -151,12 +156,12 @@ export class ArticleService {
         articleTag: true,
       },
     });
-    const articlesId = articles.map((article) => article.id);
-    const result = await this.getTag(articlesId);
-    const wrappedArticle = articles.map((article) => ({
-      ...article,
-      tagList: result,
-    }));
+    const wrappedArticle = await Promise.all(
+      articles.map(async (article) => ({
+        ...article,
+        tagList: await this.getTag(article.id),
+      })),
+    );
     return {
       status: HttpStatus.OK,
       data: new ArticleResponsesWrapperDto(wrappedArticle),
@@ -178,7 +183,7 @@ export class ArticleService {
       throw new HttpException(articleRespond.get.error, HttpStatus.NOT_FOUND);
     }
 
-    const result = await this.getTag([article.id]);
+    const result = await this.getTag(article.id);
     return {
       status: HttpStatus.OK,
       data: new ArticleResponseWrapperDto({ ...article, tagList: result }),
@@ -186,36 +191,36 @@ export class ArticleService {
     };
   }
 
-  async findByTags(tags: string[]) {
-    const findTags = await this.prisma.tag.findMany({
-      where: {
-        title: {
-          in: tags,
-        },
-      },
-    });
-
-    if (!findTags.length) {
-      throw new HttpException(articleRespond.get.error, HttpStatus.NOT_FOUND);
-    }
-
-    const articles = await this.prisma.articleTag.findMany({
+  async findByTags(tags: string | string[]) {
+    const articleTags = await this.prisma.articleTag.findMany({
       where: {
         tagId: {
-          in: findTags.map((item) => item.id),
+          in: Array.isArray(tags) ? tags : [tags],
         },
       },
       include: {
         article: true,
       },
     });
-    const articlesId = articles.map((article) => article.id);
-    const result = await this.getTag(articlesId);
 
-    const wrappedArticle = articles.map((article) => ({
-      ...article,
-      tagList: result,
-    }));
+    const articles = await this.prisma.article.findMany({
+      where: {
+        id: {
+          in: articleTags.map((articleTag) => articleTag.articleId),
+        },
+      },
+      include: {
+        user: true,
+        articleTag: true,
+      },
+    });
+
+    const wrappedArticle = await Promise.all(
+      articles.map(async (article) => ({
+        ...article,
+        tagList: await this.getTag(article.id),
+      })),
+    );
     return {
       status: HttpStatus.OK,
       data: new ArticleResponsesWrapperDto(wrappedArticle),
@@ -224,7 +229,7 @@ export class ArticleService {
   }
 
   async update(userId: string, id: string, updateArticleDto: UpdateArticleDto) {
-    const user = await this.prisma.user.findUnique({
+    const user = await this.prisma.user.findFirst({
       where: {
         id: userId,
       },
@@ -233,7 +238,7 @@ export class ArticleService {
       throw new HttpException(userRespond.get.error, HttpStatus.NOT_FOUND);
     }
 
-    const article = await this.prisma.article.findUnique({
+    const article = await this.prisma.article.findFirst({
       where: {
         id: id,
         userId: userId,
@@ -301,12 +306,16 @@ export class ArticleService {
         description: description,
         shortDescription: shortDescription,
       },
+      include: {
+        user: true,
+        articleTag: true,
+      },
     });
-    const result = await this.getTag([article.id]);
+    const result = await this.getTag(article.id);
 
     return {
       status: HttpStatus.OK,
-      data: new ArticleResponsesWrapperDto({
+      data: new ArticleResponseWrapperDto({
         ...updatedArticle,
         tagList: result,
       }),
@@ -315,7 +324,7 @@ export class ArticleService {
   }
 
   async remove(userId: string, id: string): Promise<IArticleResponse> {
-    const user = await this.prisma.user.findUnique({
+    const user = await this.prisma.user.findFirst({
       where: {
         id: userId,
       },
@@ -331,6 +340,10 @@ export class ArticleService {
     if (!article) {
       throw new HttpException(articleRespond.get.error, HttpStatus.NOT_FOUND);
     }
+    await this.prisma.articleTag.deleteMany({
+      where: { articleId: id },
+    });
+
     await this.prisma.article.delete({
       where: {
         id: id,
@@ -339,7 +352,7 @@ export class ArticleService {
 
     return {
       status: HttpStatus.OK,
-      message: articleRespond.get.success,
+      message: articleRespond.delete.success,
     };
   }
 }
