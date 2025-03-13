@@ -115,7 +115,6 @@ export class ArticleController {
   @ApiOperationDecorator({
     description: 'Update article likes',
     summary: 'Update article likes',
-    type: UpdateArticleDto,
   })
   @ApiBearerAuth()
   @Patch(':id/update-like')

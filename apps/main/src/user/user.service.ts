@@ -5,7 +5,7 @@ import { DatabaseService } from '@lib/database';
 import { hasPassword } from '@lib/helpers/hasPassword';
 import { userRespond } from '../constant/message';
 import { IUserResponse } from '@lib/types';
-import { User } from '@prisma/client';
+import { Role, User } from '@prisma/client';
 
 @Injectable()
 export class UserService {
@@ -15,7 +15,7 @@ export class UserService {
   }
 
   async register(createUserDto: RequestCreateUserDto): Promise<any> {
-    const { email, password, username } = createUserDto.user;
+    const { email, password, username, role } = createUserDto.user;
     const existEmail = await this.prisma.user.findUnique({
       where: { email: email },
     });
@@ -31,6 +31,7 @@ export class UserService {
         name: username,
         email: email,
         password: await hasPassword(password, 10),
+        role: role == 'USER' ? Role.USER : Role.ADMIN,
         avatar: '',
         description: '',
       },

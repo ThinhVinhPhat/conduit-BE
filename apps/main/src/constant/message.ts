@@ -38,3 +38,23 @@ export const articleRespond = {
     unActive: 'Article is not active',
   },
 };
+
+export const commentRespond = {
+  create: {
+    success: 'Comment responded successfully',
+    error: 'Failed to create Comment',
+  },
+  update: {
+    success: 'Comment updated successfully',
+    error: 'Failed to update Comment',
+  },
+  delete: {
+    success: 'Comment deleted successfully',
+    error: 'Failed to delete Comment',
+  },
+  get: {
+    success: 'Comment retrieved successfully',
+    error: 'Failed to retrieve Comment',
+    unActive: 'Comment is not active',
+  },
+};

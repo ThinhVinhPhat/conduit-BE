@@ -1,23 +1,46 @@
-import { Controller, Get, Body, Patch, Param, Delete } from '@nestjs/common';
+import {
+  Controller,
+  Get,
+  Param,
+  Delete,
+  HttpException,
+  HttpStatus,
+} from '@nestjs/common';
 import { TagService } from './tag.service';
-import { UpdateTagDto } from './dto/update-tag.dto';
 import { ApiBearerAuth } from '@nestjs/swagger';
-import { Public } from '@lib/decorators';
+import { ApiOperationDecorator, Public, Roles } from '@lib/decorators';
+import { Role } from '../constant/role';
 
 @Controller('tag')
 export class TagController {
   constructor(private readonly tagService: TagService) {}
 
   @Public()
+  @ApiOperationDecorator({
+    summary: 'Get all tags',
+    description: 'Get all tags',
+  })
   @Get()
   findAll() {
-    return this.tagService.findAll();
+    try {
+      return this.tagService.findAll();
+    } catch (error) {
+      throw new HttpException(error.message, HttpStatus.NOT_FOUND);
+    }
   }
 
-  @ApiBearerAuth()
+  @Public()
+  @ApiOperationDecorator({
+    summary: 'Get tag with id',
+    description: 'Get tag with id',
+  })
   @Get(':id')
   findOne(@Param('id') id: string) {
-    return this.tagService.findOne(id);
+    try {
+      return this.tagService.findOne(id);
+    } catch (error) {
+      throw new HttpException(error.message, HttpStatus.NOT_FOUND);
+    }
   }
 
   // @Patch(':id')
@@ -26,8 +49,24 @@ export class TagController {
   // }
 
   @ApiBearerAuth()
+  @Roles(Role.ADMIN)
+  @ApiOperationDecorator({
+    summary: 'Delete tag with id',
+    description: 'Delete tag with id',
+  })
   @Delete(':id')
   remove(@Param('id') id: string) {
-    return this.tagService.remove(+id);
+    return this.tagService.remove(id);
+  }
+
+  @ApiBearerAuth()
+  @Roles(Role.ADMIN)
+  @ApiOperationDecorator({
+    summary: 'Delete all tags',
+    description: 'Delete all tags',
+  })
+  @Delete(':id')
+  removeAll() {
+    return this.tagService.removeAll();
   }
 }

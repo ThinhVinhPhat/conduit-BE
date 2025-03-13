@@ -8,7 +8,6 @@ import { UserModule } from './user/user.module';
 import { ArticleModule } from './article/article.module';
 import { TagModule } from './tag/tag.module';
 import { CommentModule } from './comment/comment.module';
-import { FavoriteModule } from './favorite/favorite.module';
 import { FollowingModule } from './following/following.module';
 import { AuthModule } from './auth/auth.module';
 import { APP_GUARD } from '@nestjs/core';
@@ -40,7 +39,6 @@ import { JwtModule } from '@nestjs/jwt';
     ArticleModule,
     TagModule,
     CommentModule,
-    FavoriteModule,
     FollowingModule,
     AuthModule,
   ],

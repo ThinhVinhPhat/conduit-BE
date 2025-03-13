@@ -1,7 +1,9 @@
 import { ApiProperty } from '@nestjs/swagger';
+import { Role } from '@prisma/client';
 import { Type } from 'class-transformer';
 import {
   IsEmail,
+  IsEnum,
   IsNotEmpty,
   IsString,
   MinLength,
@@ -33,6 +35,14 @@ export class CreateUserDto {
   @IsNotEmpty()
   @IsString()
   password: string;
+
+  @ApiProperty({
+    description: 'User role',
+    example: Role.USER,
+  })
+  @IsNotEmpty()
+  @IsEnum(Role)
+  role: string;
 }
 
 export class RequestCreateUserDto {

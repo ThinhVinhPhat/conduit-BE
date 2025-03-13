@@ -34,9 +34,8 @@ export class AuthorDto {
 
 export class ArticleDto {
   @ApiProperty({
-    description: 'Slug of the article',
+    description: 'id of the article',
     type: String,
-    example: 'how-to-code-in-nestjs',
   })
   @IsString()
   @IsNotEmpty()

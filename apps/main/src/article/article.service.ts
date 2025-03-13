@@ -6,7 +6,7 @@ import { DatabaseService } from '@lib/database';
 import { IArticleResponse } from '@lib/types/index';
 import { TagService } from '../tag/tag.service';
 import slugify from 'slugify';
-import { Article, Tag } from '@prisma/client';
+import { Article } from '@prisma/client';
 import {
   ArticleResponsesWrapperDto,
   ArticleResponseWrapperDto,
