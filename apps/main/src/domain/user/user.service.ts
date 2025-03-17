@@ -3,7 +3,7 @@ import { RequestCreateUserDto } from './dto/create-user.dto';
 import { RequestUpdateUserDto } from './dto/update-user.dto';
 import { DatabaseService } from '@lib/database';
 import { hasPassword } from '@lib/helpers/hasPassword';
-import { userRespond } from '../constant/message';
+import { userRespond } from '../../constant/message';
 import { IUserResponse } from '@lib/types';
 import { Role, User } from '@prisma/client';
 

@@ -9,7 +9,7 @@ import {
 import { TagService } from './tag.service';
 import { ApiBearerAuth } from '@nestjs/swagger';
 import { ApiOperationDecorator, Public, Roles } from '@lib/decorators';
-import { Role } from '../constant/role';
+import { Role } from '../../constant/role';
 
 @Controller('tag')
 export class TagController {

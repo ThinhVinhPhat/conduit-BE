@@ -1,26 +1,29 @@
 import { HttpException, HttpStatus, Injectable, Logger } from '@nestjs/common';
 import { CreateArticleDTO } from './dto/create-article.dto';
 import { UpdateArticleDto } from './dto/update-article.dto';
-import { articleRespond, userRespond } from '../constant/message';
+import { articleRespond, userRespond } from '../../constant/message';
 import { DatabaseService } from '@lib/database';
 import { IArticleResponse } from '@lib/types/index';
 import { TagService } from '../tag/tag.service';
 import slugify from 'slugify';
-import { Article } from '@prisma/client';
 import {
   ArticleResponsesWrapperDto,
   ArticleResponseWrapperDto,
 } from './dto/article-respond';
+import { FindDTO } from './dto/find.dto';
 @Injectable()
 export class ArticleService {
-  private readonly Logger;
+  private readonly logger: Logger;
   constructor(
     private readonly prisma: DatabaseService,
     private readonly tagService: TagService,
   ) {
-    this.Logger = new Logger(ArticleService.name);
+    this.logger = new Logger(ArticleService.name);
   }
 
+  private generateSlug = (title: string) => {
+    return slugify(title + '-' + Date.now(), { lower: true, strict: true });
+  };
   private getTag = async (articlesId: string) => {
     const articleTags = await this.prisma.articleTag.findMany({
       where: {
@@ -51,54 +54,58 @@ export class ArticleService {
 
     const { title, description, shortDescription, tags } =
       createArticleDto.article;
-    const slug = slugify(title, { lower: true, strict: true });
+    const slug = this.generateSlug(title);
     try {
       const result = await this.prisma.$transaction(async () => {
-        const article = await this.prisma.article.create({
-          data: {
-            title: title,
-            description: description,
-            shortDescription: shortDescription,
-            slug: slug,
-            totalLike: 0,
-            active: true,
-            createdAt: new Date(),
-            user: {
-              connect: {
-                id: user.id,
+        try {
+          const article = await this.prisma.article.create({
+            data: {
+              title: title,
+              description: description,
+              shortDescription: shortDescription,
+              slug: slug,
+              totalLike: 0,
+              active: true,
+              createdAt: new Date(),
+              user: {
+                connect: {
+                  id: user.id,
+                },
               },
             },
-          },
-          include: {
-            user: true,
-          },
-        });
-
-        await this.prisma.tag.createMany({
-          data: tags.map((tag) => ({
-            title: tag,
-          })),
-          skipDuplicates: true,
-        });
-
-        const findTags = await this.prisma.tag.findMany({
-          where: {
-            title: {
-              in: tags,
+            include: {
+              user: true,
             },
-          },
-          select: { id: true },
-        });
+          });
 
-        await this.prisma.articleTag.createMany({
-          data: findTags.map((tag) => ({
-            articleId: article.id,
-            tagId: tag.id,
-            createdAt: new Date(),
-          })),
-          skipDuplicates: true,
-        });
-        return article;
+          await this.prisma.tag.createMany({
+            data: tags.map((tag) => ({
+              title: tag,
+            })),
+            skipDuplicates: true,
+          });
+
+          const findTags = await this.prisma.tag.findMany({
+            where: {
+              title: {
+                in: tags,
+              },
+            },
+            select: { id: true },
+          });
+
+          await this.prisma.articleTag.createMany({
+            data: findTags.map((tag) => ({
+              articleId: article.id,
+              tagId: tag.id,
+              createdAt: new Date(),
+            })),
+            skipDuplicates: true,
+          });
+          return article;
+        } catch (error) {
+          console.error(error);
+        }
       });
       return {
         status: HttpStatus.OK,
@@ -109,7 +116,7 @@ export class ArticleService {
         message: articleRespond.create.success,
       };
     } catch (error) {
-      console.log(error);
+      this.logger.warn('Failed create User', error);
       throw new HttpException(
         articleRespond.create.error,
         HttpStatus.BAD_REQUEST,
@@ -117,16 +124,28 @@ export class ArticleService {
     }
   }
 
-  async findAll() {
-    const articles: Article[] = await this.prisma.article.findMany({
+  async findAll(FindDTO: FindDTO) {
+    const { limit, offset, author, favorite, tags } = FindDTO;
+
+    const query = await this.prisma.article.findMany({
+      where: {
+        AND: [
+          author ? { user: { name: author } } : {},
+          tags
+            ? { articleTag: { some: { tag: { title: { in: tags } } } } }
+            : {},
+          favorite ? { favorites: { some: { user: { name: favorite } } } } : {},
+        ],
+      },
+      take: limit,
+      skip: offset,
       include: {
         user: true,
         articleTag: true,
       },
     });
-
     const wrappedArticle = await Promise.all(
-      articles.map(async (article) => ({
+      query.map(async (article) => ({
         ...article,
         tagList: await this.getTag(article.id),
       })),
@@ -138,41 +157,38 @@ export class ArticleService {
     };
   }
 
-  async findAllByUser(userId: string) {
-    const user = await this.prisma.user.findFirst({
-      where: {
-        id: userId,
-      },
-    });
+  async getFavoriteArticle(userId: string) {
+    const user = await this.prisma.user.findFirst({ where: { id: userId } });
     if (!user) {
-      throw new HttpException(userRespond.get.error, HttpStatus.NOT_FOUND);
+      throw new HttpException(articleRespond.get.error, HttpStatus.NOT_FOUND);
     }
-    const articles = await this.prisma.article.findMany({
-      where: {
-        userId: userId,
-      },
+    const favoriteArticle = await this.prisma.favorite.findMany({
+      where: { user: { id: userId } },
       include: {
+        article: true,
         user: true,
-        articleTag: true,
       },
     });
-    const wrappedArticle = await Promise.all(
-      articles.map(async (article) => ({
-        ...article,
-        tagList: await this.getTag(article.id),
-      })),
-    );
+    console.log(favoriteArticle);
+
     return {
       status: HttpStatus.OK,
-      data: new ArticleResponsesWrapperDto(wrappedArticle),
+      data: new ArticleResponsesWrapperDto(
+        favoriteArticle.map((item) => {
+          return {
+            ...item.article,
+            user: item.user,
+          };
+        }),
+      ),
       message: articleRespond.get.success,
     };
   }
 
-  async findOne(id: string) {
-    const article = await this.prisma.article.findUnique({
+  async findOneBySlug(slug: string) {
+    const article = await this.prisma.article.findFirst({
       where: {
-        id: id,
+        slug: slug,
       },
       include: {
         user: true,
@@ -191,46 +207,9 @@ export class ArticleService {
     };
   }
 
-  async findByTags(tags: string | string[]) {
-    const articleTags = await this.prisma.articleTag.findMany({
-      where: {
-        tagId: {
-          in: Array.isArray(tags) ? tags : [tags],
-        },
-      },
-      include: {
-        article: true,
-      },
-    });
-
-    const articles = await this.prisma.article.findMany({
-      where: {
-        id: {
-          in: articleTags.map((articleTag) => articleTag.articleId),
-        },
-      },
-      include: {
-        user: true,
-        articleTag: true,
-      },
-    });
-
-    const wrappedArticle = await Promise.all(
-      articles.map(async (article) => ({
-        ...article,
-        tagList: await this.getTag(article.id),
-      })),
-    );
-    return {
-      status: HttpStatus.OK,
-      data: new ArticleResponsesWrapperDto(wrappedArticle),
-      message: articleRespond.get.success,
-    };
-  }
-
   async updateLike(userId: string, id: string) {
     const article = await this.prisma.article.findFirst({
-      where: { id },
+      where: { id: id },
       include: {
         user: true,
         articleTag: true,
@@ -256,11 +235,19 @@ export class ArticleService {
           totalLike: article.totalLike - 1,
         },
       });
+      return {
+        status: HttpStatus.OK,
+        message: articleRespond.updateLike.remove,
+      };
     }
     await this.prisma.favorite.create({
       data: {
         userId: user.id,
         articleId: article.id,
+      },
+      include: {
+        user: true,
+        article: true,
       },
     });
     await this.prisma.article.update({
@@ -271,8 +258,7 @@ export class ArticleService {
     });
     return {
       status: HttpStatus.OK,
-      data: new ArticleResponseWrapperDto(article),
-      message: articleRespond.get.success,
+      message: articleRespond.updateLike.add,
     };
   }
 

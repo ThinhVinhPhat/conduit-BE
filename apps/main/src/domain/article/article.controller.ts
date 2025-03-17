@@ -9,6 +9,8 @@ import {
   Query,
   UnprocessableEntityException,
   Logger,
+  HttpException,
+  HttpStatus,
 } from '@nestjs/common';
 import { ArticleService } from './article.service';
 import { CreateArticleDTO } from './dto/create-article.dto';
@@ -17,6 +19,7 @@ import { UserReq } from '@lib/decorators/user.decorator';
 import { User } from '@prisma/client';
 import { ApiOperationDecorator, Public } from '@lib/decorators';
 import { ApiBearerAuth } from '@nestjs/swagger';
+import { FindDTO } from './dto/find.dto';
 
 @Controller('articles')
 export class ArticleController {
@@ -47,34 +50,31 @@ export class ArticleController {
   }
 
   @ApiOperationDecorator({
-    description: 'Get all articles Tags',
-    summary: 'Get all articles Tags',
-  })
-  @Public()
-  @Get('/get-by-tags')
-  findByTags(@Query('tags') tags: string[]) {
-    return this.articleService.findByTags(tags);
-  }
-
-  @ApiOperationDecorator({
     description: 'Get all articles',
     summary: 'Get all articles',
   })
   @Public()
   @Get()
-  findAll() {
-    return this.articleService.findAll();
+  findAll(@Query() FindDTO: FindDTO) {
+    return this.articleService.findAll(FindDTO);
   }
-
   @ApiOperationDecorator({
-    description: 'Get all articles by User',
-    summary: 'Get all articles by User',
+    description: 'Get article by favorite',
+    summary: 'Get article by favorite',
   })
   @ApiBearerAuth()
-  @Get('/find-by-user')
-  findAllByUser(@UserReq() user: User) {
-    const userId = user.id;
-    return this.articleService.findAllByUser(userId);
+  @Get('/favorite')
+  async getFavoriteArticle(@UserReq() currentUser: User) {
+    try {
+      const userId = currentUser.id;
+      return this.articleService.getFavoriteArticle(userId);
+    } catch (error) {
+      this.logger.error('Failed to get favorite article', error);
+      throw new HttpException(
+        'Failed to get favorite article',
+        HttpStatus.BAD_REQUEST,
+      );
+    }
   }
 
   @ApiOperationDecorator({
@@ -82,9 +82,9 @@ export class ArticleController {
     summary: 'Find one article',
   })
   @Public()
-  @Get(':id')
-  findOne(@Param('id') id: string) {
-    return this.articleService.findOne(id);
+  @Get(':slug')
+  findOne(@Param('slug') id: string) {
+    return this.articleService.findOneBySlug(id);
   }
 
   @ApiOperationDecorator({
@@ -123,7 +123,7 @@ export class ArticleController {
       const userId = currentUser.id;
       return this.articleService.updateLike(userId, id);
     } catch (error) {
-      this.logger.error('Failed to create article', error);
+      this.logger.error('Failed to update like article', error);
     }
   }
 

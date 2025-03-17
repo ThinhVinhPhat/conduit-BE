@@ -1,14 +1,12 @@
 import { Module } from '@nestjs/common';
-import { MainController } from './main.controller';
-import { MainService } from './main.service';
 import { DatabaseModule } from '@lib/database';
 import { ConfigModule, ConfigService } from '@nestjs/config';
 import { config, validate } from './config';
-import { UserModule } from './user/user.module';
-import { ArticleModule } from './article/article.module';
-import { TagModule } from './tag/tag.module';
-import { CommentModule } from './comment/comment.module';
-import { FollowingModule } from './following/following.module';
+import { UserModule } from './domain/user/user.module';
+import { ArticleModule } from './domain/article/article.module';
+import { TagModule } from './domain/tag/tag.module';
+import { CommentModule } from './domain/comment/comment.module';
+import { FollowingModule } from './domain/following/following.module';
 import { AuthModule } from './auth/auth.module';
 import { APP_GUARD } from '@nestjs/core';
 import { AuthGuard } from './auth/auth.guard';
@@ -42,9 +40,7 @@ import { JwtModule } from '@nestjs/jwt';
     FollowingModule,
     AuthModule,
   ],
-  controllers: [MainController],
   providers: [
-    MainService,
     {
       provide: APP_GUARD,
       useClass: AuthGuard,

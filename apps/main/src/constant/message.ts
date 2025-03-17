@@ -37,6 +37,10 @@ export const articleRespond = {
     error: 'Failed to retrieve Article',
     unActive: 'Article is not active',
   },
+  updateLike: {
+    add: 'Article liked successfully',
+    remove: 'Article unliked successfully',
+  }
 };
 
 export const commentRespond = {

@@ -18,10 +18,10 @@ import { Public } from '@lib/decorators';
 import { ApiBearerAuth } from '@nestjs/swagger';
 import { UserReq, Roles, ApiOperationDecorator } from '@lib/decorators';
 import { User } from '@prisma/client';
-import { Role } from '../constant/role';
-import { AuthService } from '../auth/auth.service';
+import { Role } from '../../constant/role';
+import { AuthService } from '../../auth/auth.service';
 import { UserResponseWrapperDto } from './dto/user-respond.dto';
-import { userRespond } from '../constant/message';
+import { userRespond } from '../../constant/message';
 
 @Controller('users')
 export class UserController {

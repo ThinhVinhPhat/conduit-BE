@@ -64,6 +64,11 @@ export class CommentController {
   @ApiBearerAuth()
   @Delete(':id')
   remove(@Param('id') id: string) {
-    return this.commentService.remove(id);
+    try {
+      return this.commentService.remove(id);
+    } catch (error) {
+      this.logger.error(error);
+      throw new HttpException('Failed to delete comment', 400);
+    }
   }
 }
