@@ -1,5 +1,17 @@
 import { ApiProperty } from '@nestjs/swagger';
-import { IsArray, IsNotEmpty, IsString } from 'class-validator';
+import { IsArray, IsDateString, IsNotEmpty, IsString } from 'class-validator';
+
+export class TagDTO {
+  @ApiProperty({ description: 'Tag id' })
+  @IsNotEmpty()
+  @IsString()
+  id: string;
+
+  @ApiProperty({ description: 'Tag title' })
+  @IsNotEmpty()
+  @IsString()
+  title: string;
+}
 
 export class TagRespondWrapperDTO {
   @ApiProperty({
@@ -8,10 +20,11 @@ export class TagRespondWrapperDTO {
   })
   @IsString()
   @IsNotEmpty()
-  title: string;
+  tag: TagDTO;
 
-  constructor(title: string) {
-    this.title = title;
+  constructor(props: any) {
+    this.tag.id = props.id;
+    this.tag.title = props.id;
   }
 }
 
@@ -22,9 +35,14 @@ export class TagResponsesWrapperDTO {
   })
   @IsArray()
   @IsNotEmpty()
-  title: string[];
+  tags: TagDTO[];
 
-  constructor(title: string[]) {
-    this.title = title;
+  constructor(props: any[]) {
+    this.tags = props.map((item) => {
+      return {
+        id: item.id,
+        title: item.title,
+      };
+    });
   }
 }

@@ -55,6 +55,7 @@ export class ArticleService {
     const { title, description, shortDescription, tags } =
       createArticleDto.article;
     const slug = this.generateSlug(title);
+
     try {
       const result = await this.prisma.$transaction(async () => {
         try {

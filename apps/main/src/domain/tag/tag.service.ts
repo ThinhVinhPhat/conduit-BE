@@ -13,7 +13,7 @@ export class TagService {
     const tags = await this.prisma.tag.findMany();
     return {
       status: HttpStatus.OK,
-      data: new TagResponsesWrapperDTO(tags.map((item) => item.title)),
+      data: new TagResponsesWrapperDTO(tags),
       message: 'Find Tag successfully',
     };
   }

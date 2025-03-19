@@ -21,7 +21,7 @@ import { JwtModule } from '@nestjs/jwt';
     JwtModule.register({
       global: true,
       secret: new ConfigService().get('JWT_SECRET'),
-      signOptions: { expiresIn: '10m' },
+      signOptions: { expiresIn: '1h' },
     }),
     ConfigModule.forRoot({
       isGlobal: true,
