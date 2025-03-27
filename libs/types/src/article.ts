@@ -6,13 +6,14 @@ export interface ArticleInterface {
   tagList: string[];
   createdAt: Date;
   updatedAt: Date;
-  // favorited: boolean;
+  favorited: boolean;
   favoritesCount: number;
   author: {
+    id: string;
     username: string;
     bio: string;
     image: string;
-    // following: boolean;
+    following: boolean;
   };
 }
 

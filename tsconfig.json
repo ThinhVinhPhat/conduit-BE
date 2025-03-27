@@ -47,6 +47,18 @@
       ],
       "@lib/types/*": [
         "libs/types/src/*"
+      ],
+      "@lib/conduit-postmark": [
+        "libs/conduit-postmark/src"
+      ],
+      "@lib/conduit-postmark/*": [
+        "libs/conduit-postmark/src/*"
+      ],
+      "@lib/conduit-imagekit": [
+        "libs/conduit-imagekit/src"
+      ],
+      "@lib/conduit-imagekit/*": [
+        "libs/conduit-imagekit/src/*"
       ]
     }
   }

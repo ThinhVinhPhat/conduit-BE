@@ -1,7 +1,7 @@
 import { Injectable, Logger, OnModuleInit } from '@nestjs/common';
 import { PrismaClient } from '@prisma/client';
 import { constructDBUrl } from './utils';
-import { config } from '../../../apps/main/src/config/index';
+import { config } from '../../../apps/main-service/src/config/index';
 
 @Injectable()
 export class DatabaseService extends PrismaClient implements OnModuleInit {
