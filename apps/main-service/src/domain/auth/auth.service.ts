@@ -18,11 +18,9 @@ export class AuthService {
     private jwtService: JwtService,
   ) {
     // this.client = createClient();
-
     // this.client.on('error', (err) => {
     //   console.error('❌ Redis error:', err);
     // });
-
     // this.client.connect();
   }
 
