@@ -3,6 +3,7 @@ import {
   Post,
   Param,
   Delete,
+  Get,
   Logger,
   HttpException,
 } from '@nestjs/common';
@@ -33,6 +34,24 @@ export class FollowingController {
       throw new HttpException('Failed to create following', 500);
     }
   }
+
+  @ApiOperationDecorator({
+    summary: 'Get user Followers',
+    description: 'Get user Followers',
+  })
+  @ApiBearerAuth()
+  @Get('/get-followers')
+  getFollowers( @UserReq() currentUser: User) {
+    try {
+      const userId = currentUser.id;
+      return this.followingService.getFollowers( userId);
+    } catch (error) {
+      this.logger.error(error);
+      throw new HttpException('Failed to create following', 500);
+    }
+  }
+
+
 
   @ApiOperationDecorator({
     summary: 'Delete a following',

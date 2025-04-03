@@ -87,9 +87,9 @@ export class ArticleController {
   })
   @Public()
   @Get(':slug')
-  findOne(@Param('slug') id: string, @Query('userId') userId: string) {
+  findOne(@Param('slug') slug: string, @Query('userId') userId: string) {
     try {
-      return this.articleService.findOneBySlug(id, userId);
+      return this.articleService.findOneBySlug(slug, userId);
     } catch (error) {
       this.logger.error('Failed to get article', error);
     }

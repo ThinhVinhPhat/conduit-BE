@@ -58,6 +58,26 @@ export class FollowingService {
     };
   }
 
+  async getFollowers(userId: string) {
+    const following = await this.prisma.following.findMany({
+      where: {
+        userId: userId,
+      },
+    });
+    const followers = await this.prisma.user.findMany({
+      where: {
+        id: {
+          in: following.map((following) => following.followerId),
+        },
+      },
+    });
+    return {
+      status: 200,
+      data: followers.map((item) => item.name),
+      message: 'Get followers successfully',
+    };
+  }
+
   async remove(followingId: string, userId: string) {
     const user = await this.prisma.user.findFirst({ where: { id: userId } });
     if (!user) {

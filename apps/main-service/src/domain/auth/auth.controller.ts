@@ -27,7 +27,7 @@ export class AuthController {
     summary: 'Sign in',
     description: 'Sign in with email and password',
   })
-  @Post('/login')
+  @Post('/validate-code')
   async validateEmail(@Body() validateCodeDTO: ValidateCodeDTO) {
     if (Object.keys(validateCodeDTO).length == 0) {
       return { message: 'Invalid request' };

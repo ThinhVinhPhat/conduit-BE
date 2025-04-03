@@ -14,6 +14,16 @@ export class FindDTO {
   tags: string[];
 
   @ApiPropertyOptional({
+    description: 'Filter by followers',
+    type: 'array',
+    items: { type: 'string' },
+  })
+  @IsOptional()
+  @IsArray()
+  @Transform(({ value }) => (Array.isArray(value) ? value : [value]))
+  followers: string[];
+
+  @ApiPropertyOptional({
     description: 'Filter by author',
   })
   @IsOptional()

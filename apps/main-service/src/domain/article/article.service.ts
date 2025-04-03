@@ -4,7 +4,6 @@ import { UpdateArticleDTO } from './dto/update-article.dto';
 import { articleRespond, userRespond } from '../../constant/message';
 import { DatabaseService } from '@lib/database';
 import { IArticleResponse } from '@lib/types/index';
-import { TagService } from '../tag/tag.service';
 import slugify from 'slugify';
 import {
   ArticleResponsesWrapperDto,
@@ -14,10 +13,7 @@ import { FindDTO } from './dto/find.dto';
 @Injectable()
 export class ArticleService {
   private readonly logger: Logger;
-  constructor(
-    private readonly prisma: DatabaseService,
-    private readonly tagService: TagService,
-  ) {
+  constructor(private readonly prisma: DatabaseService) {
     this.logger = new Logger(ArticleService.name);
   }
 
@@ -147,18 +143,28 @@ export class ArticleService {
   }
 
   async findAll(FindDTO: FindDTO) {
-    const { userId, limit, offset, author, favorite, tags } = FindDTO;
+    const { userId, limit, offset, author, favorite, tags, followers } =
+      FindDTO;
+
+    const filters = [];
+
+    if (author) {
+      filters.push({ user: { name: author } });
+    }
+    if (tags) {
+      filters.push({ articleTag: { some: { tag: { title: { in: tags } } } } });
+    }
+    if (favorite) {
+      filters.push({ favorites: { some: { user: { name: favorite } } } });
+    }
+    if (followers) {
+      filters.push({ user: { name: { in: followers } } });
+    }
+
+    const whereClause = filters.length > 0 ? { OR: filters } : {};
 
     const query = await this.prisma.article.findMany({
-      where: {
-        AND: [
-          author ? { user: { name: author } } : {},
-          tags
-            ? { articleTag: { some: { tag: { title: { in: tags } } } } }
-            : {},
-          favorite ? { favorites: { some: { user: { name: favorite } } } } : {},
-        ],
-      },
+      where: whereClause,
       take: limit,
       skip: offset,
       include: {

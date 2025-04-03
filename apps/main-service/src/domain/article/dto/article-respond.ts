@@ -188,6 +188,13 @@ export class ArticleResponsesWrapperDto {
   @Type(() => ArticleDto)
   articles: ArticleDto[];
 
+  @ApiProperty({
+    description: 'Total number of articles',
+    type: Number,
+  })
+  @Type(() => Number)
+  articleCount: number;
+
   constructor(props: any[]) {
     this.articles = props.map((article) => ({
       id: article.id,
@@ -208,5 +215,6 @@ export class ArticleResponsesWrapperDto {
         following: article.user.following,
       },
     }));
+    this.articleCount = props.length;
   }
 }
